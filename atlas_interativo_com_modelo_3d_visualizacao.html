@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas Anatômico do Coração Humano</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ==========================================================================
+           TOKENS E PALETA OFICIAL
+           ========================================================================== */
+        :root {
+            --header-height: 64px;
+            --color__primary: #b12e32;
+            --color__secondary: #9c2426;
+            --color__tertiary: #1175d6;
+            --color__light: #faf1f2;
+            --color__link__header: #174f6d;
+            --color__text--primary: #b12e32;
+            --color__text__bottomnav: #155d84;
+            --color__background__topicmenu: #8b230f;
+            --color__background__versionswitcher__light: #e7f9fd;
+
+            --surface-page: #f5f7fa;
+            --surface-card: #ffffff;
+            --text-body: #1f2428;
+            --text-muted: #5a626a;
+            --border-neutral: #dce1e7;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.14);
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--surface-page);
+            color: var(--text-body);
+            min-height: 100vh;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* ==========================================================================
+           CABEÇALHO MINIMALISTA DO ATLAS (64PX)
+           ========================================================================== */
+        .atlas-header {
+            height: var(--header-height);
+            background-color: var(--surface-card);
+            border-bottom: 3px solid var(--color__primary);
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-shrink: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .atlas-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .atlas-emblem {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            background-color: var(--color__primary);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .atlas-title {
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--color__text--primary);
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        .atlas-subtitle {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--color__link__header);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* Seletor Rápido de Vista */
+        .view-switcher {
+            display: flex;
+            align-items: center;
+            background-color: var(--color__background__versionswitcher__light);
+            border: 1px solid var(--color__link__header);
+            border-radius: 22px;
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .view-btn {
+            border: none;
+            background: transparent;
+            color: var(--color__link__header);
+            font-size: 12.5px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .view-btn:hover {
+            background-color: rgba(23, 79, 109, 0.1);
+        }
+
+        .view-btn.active {
+            background-color: var(--color__link__header);
+            color: #ffffff;
+        }
+
+        /* Controles de Visualização */
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ctrl-btn {
+            height: 36px;
+            padding: 0 11px;
+            border-radius: 6px;
+            border: 1px solid var(--border-neutral);
+            background-color: var(--surface-card);
+            color: var(--color__link__header);
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .ctrl-btn:hover {
+            border-color: var(--color__primary);
+            color: var(--color__primary);
+            background-color: var(--color__light);
+        }
+
+        .ctrl-btn.active {
+            background-color: var(--color__primary);
+            border-color: var(--color__primary);
+            color: #ffffff;
+        }
+
+        /* ==========================================================================
+           ÁREA PRINCIPAL SPLIT-VIEW (DIAGRAMA SVG + PAINEL DE INSPEÇÃO)
+           ========================================================================== */
+        .atlas-workspace {
+            flex: 0 0 auto;
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(320px, 420px);
+            min-height: calc(100vh - var(--header-height));
+            overflow: visible;
+        }
+
+        /* Área do Diagrama Anatômico (Esquerda/Centro) */
+        .canvas-stage {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(circle at center, #ffffff 0%, #e9eef4 100%);
+            border-right: 1px solid var(--border-neutral);
+            overflow: hidden;
+        }
+
+        /* Barra Superior de Camadas Alternáveis */
+        .layers-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid var(--border-neutral);
+            z-index: 10;
+        }
+
+        .layers-label {
+            font-size: 11.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-right: 4px;
+            letter-spacing: 0.04em;
+        }
+
+        .layer-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 11px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1.5px solid var(--border-neutral);
+            background-color: var(--surface-card);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .layer-toggle.active {
+            border-color: var(--color__primary);
+            background-color: var(--color__light);
+            color: var(--color__primary);
+        }
+
+        .layer-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
+
+        /* Viewport Interativo do SVG */
+        .svg-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            cursor: grab;
+        }
+
+        .svg-container:active {
+            cursor: grabbing;
+        }
+
+        #heartAtlasSvg {
+            width: 100%;
+            height: 100%;
+            max-width: 620px;
+            max-height: 620px;
+            transition: transform 0.2s ease-out;
+            user-select: none;
+        }
+
+        /* Interatividade nas Estruturas Anatômicas do SVG */
+        .anat-structure {
+            cursor: pointer;
+            transition: filter 0.18s ease, opacity 0.25s ease, stroke-width 0.18s ease;
+        }
+
+        .anat-structure:hover {
+            filter: brightness(1.13) drop-shadow(0 0 8px rgba(177, 46, 50, 0.55));
+            stroke: #ffffff;
+            stroke-width: 2.5px;
+        }
+
+        .anat-structure.selected {
+            filter: brightness(1.16) drop-shadow(0 0 12px rgba(17, 117, 214, 0.9));
+            stroke: #1175d6;
+            stroke-width: 3.5px;
+        }
+
+        .layer-hidden {
+            display: none !important;
+        }
+
+        .labels-hidden .svg-label-group {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .svg-label-group {
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+
+        /* Legenda Flutuante Inferior do Canvas */
+        .canvas-footer-hint {
+            position: absolute;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.92);
+            border: 1px solid var(--border-neutral);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color__link__header);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-sm);
+            white-space: nowrap;
+        }
+
+        .legend-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .swatch-venous { width: 10px; height: 10px; border-radius: 2px; background: #2b6cb0; }
+        .swatch-arterial { width: 10px; height: 10px; border-radius: 2px; background: #c53030; }
+        .swatch-electric { width: 10px; height: 10px; border-radius: 2px; background: #ecc94b; }
+
+        /* ==========================================================================
+           PAINEL LATERAL DIREITO: INSPEÇÃO ANATÔMICA DA PEÇA
+           ========================================================================== */
+        .inspector-panel {
+            background-color: var(--surface-card);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .inspector-header {
+            background-color: var(--color__background__topicmenu);
+            color: #ffffff;
+            padding: 18px 22px;
+            border-bottom: 3px solid var(--color__secondary);
+        }
+
+        .inspector-category {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #ffd6d7;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .inspector-name {
+            font-size: 20px;
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 3px;
+        }
+
+        .inspector-latin {
+            font-size: 13px;
+            font-style: italic;
+            color: #f8c4c6;
+        }
+
+        .inspector-body {
+            padding: 18px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            flex: 1;
+        }
+
+        .data-block {
+            background-color: var(--surface-page);
+            border: 1px solid var(--border-neutral);
+            border-left: 4px solid var(--color__primary);
+            border-radius: 6px;
+            padding: 11px 14px;
+        }
+
+        .data-block.blue {
+            border-left-color: var(--color__tertiary);
+            background-color: var(--color__background__versionswitcher__light);
+        }
+
+        .data-label {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color__primary);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .data-block.blue .data-label {
+            color: var(--color__link__header);
+        }
+
+        .data-value {
+            font-size: 13.5px;
+            line-height: 1.5;
+            color: var(--text-body);
+        }
+
+        .btn-inspect-modal {
+            width: 100%;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--color__tertiary);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: opacity 0.15s ease;
+        }
+
+        .btn-inspect-modal:hover {
+            opacity: 0.92;
+        }
+
+        /* Navegação Sequencial no Painel de Inspeção */
+        .inspector-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: auto;
+            padding-top: 8px;
+        }
+
+        .nav-struct-btn {
+            padding: 9px 12px;
+            border-radius: 6px;
+            border: 1.5px solid var(--color__primary);
+            background-color: var(--color__light);
+            color: var(--color__primary);
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .nav-struct-btn:hover {
+            background-color: var(--color__primary);
+            color: #ffffff;
+        }
+
+        /* ==========================================================================
+           MODAL DE INSPEÇÃO AMPLIADA DA PEÇA
+           ========================================================================== */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(15, 20, 25, 0.72);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal-card {
+            background-color: var(--surface-card);
+            border-top: 6px solid var(--color__primary);
+            border-radius: 8px;
+            max-width: 580px;
+            width: 100%;
+            padding: 24px;
+            position: relative;
+            box-shadow: var(--shadow-md);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--border-neutral);
+            background-color: var(--surface-page);
+            color: var(--color__primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background-color: var(--color__primary);
+            color: #ffffff;
+        }
+
+        /* ==========================================================================
+           RESPONSIVIDADE
+           ========================================================================== */
+        @media (max-width: 960px) {
+            body {
+                height: auto;
+                overflow-y: auto;
+            }
+            .atlas-header {
+                height: auto;
+                flex-wrap: wrap;
+                padding: 10px 14px;
+            }
+            .atlas-workspace {
+                grid-template-columns: minmax(0, 1fr);
+                min-height: 0;
+                overflow: visible;
+            }
+            .canvas-stage {
+                height: 520px;
+                border-right: none;
+                border-bottom: 2px solid var(--border-neutral);
+            }
+            .inspector-panel {
+                height: auto;
+                overflow: visible;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .sketchfab-section {
+                padding: 16px 12px 20px;
+            }
+            .sketchfab-frame {
+                aspect-ratio: 4 / 3;
+                min-height: 280px;
+            }
+            .sketchfab-embed-wrapper iframe {
+                min-height: 280px;
+            }
+            .view-switcher {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .view-btn {
+                flex: 1;
+                padding: 6px 6px;
+                font-size: 11px;
+                text-align: center;
+            }
+            .ctrl-btn span {
+                display: none;
+            }
+            .canvas-footer-hint {
+                font-size: 11px;
+                padding: 5px 10px;
+            }
+        }
+
+        /* Visualizador 3D externo do coração (Sketchfab) */
+        .sketchfab-section {
+            width: 100%;
+            min-width: 0;
+            padding: 18px 22px 22px;
+            border-top: 1px solid var(--border-neutral);
+            background: var(--surface-card);
+        }
+        .sketchfab-section h2 {
+            color: var(--color__primary);
+            font-size: 17px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+        .sketchfab-embed-wrapper {
+            width: 100%;
+            min-width: 0;
+        }
+        .sketchfab-frame {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            min-height: 320px;
+            max-height: 680px;
+            overflow: hidden;
+            border-radius: 8px;
+            background: #f1f3f5;
+        }
+        .sketchfab-embed-wrapper iframe {
+            display: block;
+            width: 100%;
+            height: 100%;
+            min-height: 320px;
+            border: 0;
+            border-radius: 8px;
+            background: #f1f3f5;
+        }
+        .sketchfab-fallback {
+            margin: 10px 0 0;
+            padding: 12px 14px;
+            border: 1px solid var(--border-neutral);
+            border-radius: 8px;
+            background: var(--surface-card);
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .sketchfab-open-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 7px;
+            padding: 9px 13px;
+            border-radius: 6px;
+            background: #1473e6;
+            color: #fff !important;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .sketchfab-open-link:hover { background: #0d5fbe; }
+        .sketchfab-embed-wrapper p {
+            font-size: 12px;
+            line-height: 1.5;
+            margin: 8px 2px 0;
+            color: var(--text-muted);
+        }
+        .sketchfab-embed-wrapper a {
+            color: var(--color__link__header);
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .sketchfab-embed-wrapper a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <!-- ==========================================================================
+         1. CABEÇALHO SIMPLES E LIMPO (64PX)
+         ========================================================================== -->
+    <header class="atlas-header">
+        <div class="atlas-brand">
+            <div class="atlas-emblem">
+                <i class="fas fa-heart"></i>
+            </div>
+            <div>
+                <div class="atlas-title">Atlas Interativo da Anatomia do Coração</div>
+                <div class="atlas-subtitle">Terminologia Anatômica Internacional</div>
+            </div>
+        </div>
+
+        <!-- Seletor Rápido de Vista -->
+        <div class="view-switcher" role="group" aria-label="Seletor de Vista Anatômica">
+            <button class="view-btn active" data-view="coronal">Corte Frontal / Câmaras</button>
+            <button class="view-btn" data-view="anterior">Vista Anterior / Externa</button>
+        </div>
+
+        <!-- Controles de Visualização -->
+        <div class="header-controls">
+            <button class="ctrl-btn" id="btnZoomIn" title="Ampliar Zoom">
+                <i class="fas fa-search-plus"></i>
+            </button>
+            <button class="ctrl-btn" id="btnZoomOut" title="Reduzir Zoom">
+                <i class="fas fa-search-minus"></i>
+            </button>
+            <button class="ctrl-btn" id="btnZoomReset" title="Resetar Zoom e Posição">
+                <i class="fas fa-compress-arrows-alt"></i>
+            </button>
+            <button class="ctrl-btn active" id="btnToggleLabels" title="Mostrar ou Ocultar Rótulos">
+                <i class="fas fa-tag"></i> <span>Rótulos</span>
+            </button>
+            <button class="ctrl-btn" id="btnFullscreen" title="Alternar Tela Cheia">
+                <i class="fas fa-expand"></i> <span>Tela Cheia</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ==========================================================================
+         2. ÁREA PRINCIPAL SPLIT-VIEW
+         ========================================================================== -->
+    <main class="atlas-workspace">
+
+        <!-- ESQUERDA/CENTRO: DIAGRAMA VETORIAL SVG INTERATIVO -->
+        <section class="canvas-stage" id="canvasStage">
+
+            <!-- Camadas Alternáveis -->
+            <div class="layers-bar">
+                <span class="layers-label">Camadas:</span>
+                <button class="layer-toggle active" data-layer="camaras">
+                    <span class="layer-dot"></span> Câmaras &amp; Septo
+                </button>
+                <button class="layer-toggle active" data-layer="valvas">
+                    <span class="layer-dot"></span> Valvas Cardíacas
+                </button>
+                <button class="layer-toggle active" data-layer="vasos">
+                    <span class="layer-dot"></span> Grandes Vasos
+                </button>
+                <button class="layer-toggle active" data-layer="coronarias">
+                    <span class="layer-dot"></span> Artérias Coronárias
+                </button>
+                <button class="layer-toggle active" data-layer="conducao">
+                    <span class="layer-dot"></span> Sistema de Condução
+                </button>
+            </div>
+
+            <!-- Viewport do SVG -->
+            <div class="svg-container" id="svgContainer">
+                <svg id="heartAtlasSvg" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="gradVein" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#3182ce"/>
+                            <stop offset="100%" stop-color="#1a365d"/>
+                        </linearGradient>
+                        <linearGradient id="gradArt" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#e53e3e"/>
+                            <stop offset="100%" stop-color="#742a2a"/>
+                        </linearGradient>
+                        <linearGradient id="gradWall" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#9b2c2c"/>
+                            <stop offset="100%" stop-color="#550d0d"/>
+                        </linearGradient>
+                        <linearGradient id="gradExterior" x1="15%" y1="10%" x2="85%" y2="90%">
+                            <stop offset="0%" stop-color="#c53030"/>
+                            <stop offset="55%" stop-color="#8b230f"/>
+                            <stop offset="100%" stop-color="#4a0e0e"/>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- ==============================================================
+                         CAMADA 1: GRANDES VASOS (Aorta, Tronco Pulmonar, Cavas, Pulmonares)
+                         ============================================================== -->
+                    <g id="layer-vasos">
+                        <!-- Veia Cava Superior -->
+                        <g class="anat-structure" data-part="veia-cava-superior" id="part-veia-cava-superior">
+                            <path d="M 178 58 L 222 58 L 222 182 L 178 182 Z" fill="url(#gradVein)" stroke="#102a43" stroke-width="2"/>
+                            <ellipse cx="200" cy="58" rx="22" ry="6" fill="#4299e1" stroke="#102a43" stroke-width="1.5"/>
+                        </g>
+
+                        <!-- Veia Cava Inferior -->
+                        <g class="anat-structure" data-part="veia-cava-inferior" id="part-veia-cava-inferior">
+                            <path d="M 186 420 L 228 420 L 228 525 L 186 525 Z" fill="url(#gradVein)" stroke="#102a43" stroke-width="2"/>
+                            <ellipse cx="207" cy="525" rx="21" ry="6" fill="#1a365d" stroke="#102a43" stroke-width="1.5"/>
+                        </g>
+
+                        <!-- Arco da Aorta e Ramos Supra-aórticos -->
+                        <g class="anat-structure" data-part="aorta" id="part-aorta">
+                            <path d="M 272 225 L 272 112 C 272 52, 378 52, 378 118 L 378 175 L 338 175 L 338 120 C 338 92, 310 92, 310 120 L 310 225 Z" fill="url(#gradArt)" stroke="#4a1212" stroke-width="2"/>
+                            <!-- Tronco Braquiocefálico -->
+                            <path d="M 288 68 L 288 26 L 306 26 L 306 64 Z" fill="#c53030" stroke="#4a1212" stroke-width="1.5"/>
+                            <!-- Artéria Carótida Comum Esquerda -->
+                            <path d="M 318 62 L 318 22 L 333 22 L 333 62 Z" fill="#c53030" stroke="#4a1212" stroke-width="1.5"/>
+                            <!-- Artéria Subclávia Esquerda -->
+                            <path d="M 345 68 L 345 28 L 360 28 L 360 73 Z" fill="#c53030" stroke="#4a1212" stroke-width="1.5"/>
+                        </g>
+
+                        <!-- Tronco Pulmonar e Artérias Pulmonares -->
+                        <g class="anat-structure" data-part="tronco-pulmonar" id="part-tronco-pulmonar">
+                            <path d="M 258 282 L 258 162 C 258 130, 318 124, 422 138 L 422 170 C 345 160, 302 164, 302 184 L 302 282 Z" fill="#2b6cb0" stroke="#102a43" stroke-width="2"/>
+                            <!-- Ramo Artéria Pulmonar Direita (passando atrás da aorta) -->
+                            <path d="M 155 135 L 265 142 L 265 166 L 155 158 Z" fill="#2c5282" stroke="#102a43" stroke-width="1.5"/>
+                        </g>
+
+                        <!-- Veias Pulmonares (Direitas e Esquerdas) -->
+                        <g class="anat-structure" data-part="veias-pulmonares" id="part-veias-pulmonares">
+                            <!-- Esquerdas -->
+                            <path d="M 432 198 L 502 182 L 506 204 L 436 220 Z" fill="#e53e3e" stroke="#4a1212" stroke-width="1.5"/>
+                            <path d="M 438 238 L 508 232 L 508 254 L 438 260 Z" fill="#e53e3e" stroke="#4a1212" stroke-width="1.5"/>
+                            <!-- Direitas (emergindo posteriormente) -->
+                            <path d="M 115 195 L 175 202 L 175 222 L 115 215 Z" fill="#c53030" stroke="#4a1212" stroke-width="1.5"/>
+                            <path d="M 115 232 L 175 236 L 175 256 L 115 252 Z" fill="#c53030" stroke="#4a1212" stroke-width="1.5"/>
+                        </g>
+                    </g>
+
+                    <!-- ==============================================================
+                         CONTORNO MIOCÁRDICO BASE / SUPERFÍCIE ANTERIOR
+                         ============================================================== -->
+                    <path id="myocardium-outer" d="M 170 175 C 118 220, 112 330, 170 415 C 228 498, 332 562, 398 552 C 458 544, 496 445, 476 325 C 462 242, 442 185, 388 175 Z" fill="url(#gradWall)" stroke="#3b0707" stroke-width="3.5"/>
+
+                    <!-- ==============================================================
+                         CAMADA 2: CÂMARAS CARDÍACAS E SEPTO INTERVENTRICULAR
+                         ============================================================== -->
+                    <g id="layer-camaras">
+                        <!-- Átrio Direito -->
+                        <g class="anat-structure selected" data-part="atrio-direito" id="part-atrio-direito">
+                            <path d="M 176 182 C 134 218, 134 304, 176 340 L 246 328 L 246 194 Z" fill="#2c5282" stroke="#90cdf4" stroke-width="1.8"/>
+                        </g>
+
+                        <!-- Ventrículo Direito -->
+                        <g class="anat-structure" data-part="ventriculo-direito" id="part-ventriculo-direito">
+                            <path d="M 182 352 C 188 426, 252 496, 326 516 L 308 340 L 246 340 Z" fill="#2b6cb0" stroke="#90cdf4" stroke-width="1.8"/>
+                        </g>
+
+                        <!-- Átrio Esquerdo -->
+                        <g class="anat-structure" data-part="atrio-esquerdo" id="part-atrio-esquerdo">
+                            <path d="M 342 194 L 418 198 C 450 230, 450 296, 420 326 L 342 318 Z" fill="#9b2c2c" stroke="#feb2b2" stroke-width="1.8"/>
+                        </g>
+
+                        <!-- Ventrículo Esquerdo -->
+                        <g class="anat-structure" data-part="ventriculo-esquerdo" id="part-ventriculo-esquerdo">
+                            <path d="M 338 334 L 420 340 C 440 422, 412 514, 368 526 C 344 526, 332 444, 324 352 Z" fill="#c53030" stroke="#feb2b2" stroke-width="1.8"/>
+                        </g>
+
+                        <!-- Septo Interventricular e Interatrial -->
+                        <g class="anat-structure" data-part="septo-interventricular" id="part-septo-interventricular">
+                            <path d="M 250 202 L 336 202 L 336 324 L 318 340 L 352 530 L 324 528 L 300 344 L 250 324 Z" fill="#742a2a" stroke="#fbd38d" stroke-width="1.8"/>
+                        </g>
+                    </g>
+
+                    <!-- Superfície Anterior Fechada (Ativada apenas na Vista Anterior Externa) -->
+                    <g id="anterior-epicardium-overlay" class="layer-hidden">
+                        <path d="M 172 178 C 122 222, 116 330, 172 412 C 228 494, 330 558, 396 548 C 454 540, 492 444, 472 326 C 458 244, 438 188, 386 178 Z" fill="url(#gradExterior)" stroke="#4a0e0e" stroke-width="3"/>
+                        <!-- Sulco Interventricular Anterior -->
+                        <path d="M 295 245 C 312 335, 342 435, 378 545" fill="none" stroke="#550d0d" stroke-width="6" stroke-linecap="round" opacity="0.65"/>
+                        <!-- Aurícula Direita -->
+                        <path d="M 178 182 C 210 175, 248 195, 255 225 C 222 238, 185 225, 178 182 Z" fill="#9b2c2c" stroke="#4a0e0e" stroke-width="2"/>
+                        <!-- Aurícula Esquerda -->
+                        <path d="M 415 195 C 385 188, 355 202, 348 228 C 378 238, 408 225, 415 195 Z" fill="#b12e32" stroke="#4a0e0e" stroke-width="2"/>
+                    </g>
+
+                    <!-- ==============================================================
+                         CAMADA 3: VALVAS CARDÍACAS
+                         ============================================================== -->
+                    <g id="layer-valvas">
+                        <!-- Valva Tricúspide -->
+                        <g class="anat-structure" data-part="valva-tricuspide" id="part-valva-tricuspide">
+                            <path d="M 176 342 L 212 365 L 248 338" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+                            <path d="M 212 365 L 204 405 M 212 365 L 226 402" stroke="#e2e8f0" stroke-width="1.8" stroke-dasharray="3,2"/>
+                            <circle cx="212" cy="350" r="8" fill="#ed8936" stroke="#1a202c" stroke-width="1.5"/>
+                        </g>
+
+                        <!-- Valva Mitral (Bicúspide) -->
+                        <g class="anat-structure" data-part="valva-mitral" id="part-valva-mitral">
+                            <path d="M 340 326 L 380 352 L 420 332" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+                            <path d="M 380 352 L 370 398 M 380 352 L 395 395" stroke="#e2e8f0" stroke-width="1.8" stroke-dasharray="3,2"/>
+                            <circle cx="380" cy="338" r="8" fill="#ed8936" stroke="#1a202c" stroke-width="1.5"/>
+                        </g>
+
+                        <!-- Valva Pulmonar -->
+                        <g class="anat-structure" data-part="valva-pulmonar" id="part-valva-pulmonar">
+                            <path d="M 262 275 Q 280 292 298 275" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
+                            <circle cx="280" cy="278" r="7.5" fill="#4299e1" stroke="#ffffff" stroke-width="1.8"/>
+                        </g>
+
+                        <!-- Valva Aórtica -->
+                        <g class="anat-structure" data-part="valva-aortica" id="part-valva-aortica">
+                            <path d="M 276 225 Q 292 242 308 225" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
+                            <circle cx="292" cy="228" r="7.5" fill="#f56565" stroke="#ffffff" stroke-width="1.8"/>
+                        </g>
+                    </g>
+
+                    <!-- ==============================================================
+                         CAMADA 4: ARTÉRIAS CORONÁRIAS (ACD e ACE / DA / CX)
+                         ============================================================== -->
+                    <g id="layer-coronarias">
+                        <!-- Artéria Coronária Direita (ACD) -->
+                        <g class="anat-structure" data-part="arteria-coronaria-direita" id="part-arteria-coronaria-direita">
+                            <path d="M 275 215 C 235 225, 195 265, 178 325 C 168 360, 185 405, 222 440" fill="none" stroke="#ff4d4d" stroke-width="5.5" stroke-linecap="round"/>
+                            <path d="M 185 335 L 228 385" fill="none" stroke="#ff4d4d" stroke-width="3.5" stroke-linecap="round"/>
+                        </g>
+
+                        <!-- Artéria Coronária Esquerda (Tronco, DA e Circunflexa) -->
+                        <g class="anat-structure" data-part="arteria-coronaria-esquerda" id="part-arteria-coronaria-esquerda">
+                            <!-- Tronco + Descendente Anterior (DA) -->
+                            <path d="M 308 212 C 330 220, 342 245, 336 285 C 330 345, 348 425, 376 515" fill="none" stroke="#ff4d4d" stroke-width="6" stroke-linecap="round"/>
+                            <!-- Ramo Diagonal -->
+                            <path d="M 336 330 L 395 405" fill="none" stroke="#ff4d4d" stroke-width="3.5" stroke-linecap="round"/>
+                            <!-- Ramo Circunflexo (CX) -->
+                            <path d="M 335 238 C 378 242, 425 268, 452 315" fill="none" stroke="#ff4d4d" stroke-width="4.5" stroke-linecap="round"/>
+                        </g>
+                    </g>
+
+                    <!-- ==============================================================
+                         CAMADA 5: SISTEMA DE CONDUÇÃO ELÉTRICA
+                         ============================================================== -->
+                    <g id="layer-conducao">
+                        <!-- Nó Sinoatrial (Nó SA) -->
+                        <g class="anat-structure" data-part="no-sinoatrial" id="part-no-sinoatrial">
+                            <ellipse cx="192" cy="196" rx="11" ry="7" fill="#ecc94b" stroke="#744210" stroke-width="2"/>
+                            <!-- Vias Internodais -->
+                            <path d="M 192 203 C 175 240, 188 288, 244 304" fill="none" stroke="#f6e05e" stroke-width="2.5" stroke-dasharray="5,3"/>
+                            <path d="M 201 198 C 228 228, 242 268, 248 302" fill="none" stroke="#f6e05e" stroke-width="2.5" stroke-dasharray="5,3"/>
+                        </g>
+
+                        <!-- Nó Atrioventricular (Nó AV) -->
+                        <g class="anat-structure" data-part="no-atrioventricular" id="part-no-atrioventricular">
+                            <ellipse cx="252" cy="306" rx="10" ry="7" fill="#ecc94b" stroke="#744210" stroke-width="2"/>
+                        </g>
+
+                        <!-- Fascículo Atrioventricular (Feixe de His) e Ramos -->
+                        <g class="anat-structure" data-part="feixe-de-his" id="part-feixe-de-his">
+                            <!-- Tronco do Feixe de His -->
+                            <path d="M 262 308 L 306 326" fill="none" stroke="#ecc94b" stroke-width="4" stroke-linecap="round"/>
+                            <!-- Ramo Direito + Fibras de Purkinje -->
+                            <path d="M 306 326 L 316 475 C 295 495, 245 480, 212 435" fill="none" stroke="#f6e05e" stroke-width="3" stroke-linecap="round"/>
+                            <!-- Ramo Esquerdo + Fibras de Purkinje -->
+                            <path d="M 306 326 L 342 485 C 375 505, 412 465, 418 400" fill="none" stroke="#f6e05e" stroke-width="3" stroke-linecap="round"/>
+                        </g>
+                    </g>
+
+                    <!-- ==============================================================
+                         RÓTULOS ANATÔMICOS DIRETOS (OCULTÁVEIS)
+                         ============================================================== -->
+                    <g class="svg-label-group" id="svgLabelsGroup">
+                        <rect x="172" y="95" width="56" height="20" rx="4" fill="rgba(16,42,67,0.85)"/>
+                        <text x="200" y="109" fill="#ffffff" font-size="11" font-weight="800" text-anchor="middle">VCS</text>
+
+                        <rect x="292" y="74" width="64" height="20" rx="4" fill="rgba(116,42,42,0.9)"/>
+                        <text x="324" y="88" fill="#ffffff" font-size="11" font-weight="800" text-anchor="middle">AORTA</text>
+
+                        <rect x="166" y="252" width="52" height="22" rx="4" fill="rgba(0,0,0,0.65)"/>
+                        <text x="192" y="267" fill="#ffffff" font-size="12" font-weight="800" text-anchor="middle">AD</text>
+
+                        <rect x="224" y="420" width="52" height="22" rx="4" fill="rgba(0,0,0,0.65)"/>
+                        <text x="250" y="435" fill="#ffffff" font-size="12" font-weight="800" text-anchor="middle">VD</text>
+
+                        <rect x="366" y="248" width="52" height="22" rx="4" fill="rgba(0,0,0,0.65)"/>
+                        <text x="392" y="263" fill="#ffffff" font-size="12" font-weight="800" text-anchor="middle">AE</text>
+
+                        <rect x="356" y="425" width="52" height="22" rx="4" fill="rgba(0,0,0,0.65)"/>
+                        <text x="382" y="440" fill="#ffffff" font-size="12" font-weight="800" text-anchor="middle">VE</text>
+
+                        <rect x="180" y="472" width="54" height="20" rx="4" fill="rgba(16,42,67,0.85)"/>
+                        <text x="207" y="486" fill="#ffffff" font-size="11" font-weight="800" text-anchor="middle">VCI</text>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Legenda Rápida Inferior -->
+            <div class="canvas-footer-hint">
+                <span class="legend-badge"><span class="swatch-venous"></span> Sangue Venoso</span>
+                <span class="legend-badge"><span class="swatch-arterial"></span> Sangue Arterial / Coronárias</span>
+                <span class="legend-badge"><span class="swatch-electric"></span> Sistema Excito-Condutor</span>
+            </div>
+        </section>
+
+        <!-- DIREITA: PAINEL LATERAL DE INSPEÇÃO DA PEÇA SELECIONADA -->
+        <aside class="inspector-panel">
+            <div class="inspector-header">
+                <span class="inspector-category" id="inspCategory">Câmara Cardíaca • Coração Direito</span>
+                <h1 class="inspector-name" id="inspName">Átrio Direito</h1>
+                <div class="inspector-latin" id="inspLatin">Atrium dextrum</div>
+            </div>
+
+            <div class="inspector-body">
+                <div class="data-block">
+                    <div class="data-label"><i class="fas fa-map-marker-alt"></i> Localização / Topografia</div>
+                    <div class="data-value" id="inspTopography">
+                        Forma a borda direita do coração no mediastino médio, situado anteriormente e à direita do átrio esquerdo, entre as desembocaduras das veias cavas superior e inferior.
+                    </div>
+                </div>
+
+                <div class="data-block">
+                    <div class="data-label"><i class="fas fa-tint"></i> Função Hemodinâmica / Fisiológica</div>
+                    <div class="data-value" id="inspFunction">
+                        Recebe o retorno venoso sistêmico (veia cava superior, veia cava inferior e seio coronário) sob baixa pressão (2–6 mmHg) e impulsiona o sangue através da valva tricúspide para o ventrículo direito durante a diástole ventricular.
+                    </div>
+                </div>
+
+                <div class="data-block">
+                    <div class="data-label"><i class="fas fa-project-diagram"></i> Relações Anatômicas</div>
+                    <div class="data-value" id="inspRelations">
+                        Separa-se do átrio esquerdo pelo septo interatrial (onde se encontra a fossa oval). Internamente, a crista terminal divide a parede posterior lisa (seio das veias cavas) da parede anterior rugosa (músculos pectíneos).
+                    </div>
+                </div>
+
+                <div class="data-block blue">
+                    <div class="data-label"><i class="fas fa-heartbeat"></i> Irrigação e Inervação</div>
+                    <div class="data-value" id="inspVascular">
+                        Irrigado principalmente por ramos atriais da artéria coronária direita (incluindo o ramo do nó sinoatrial em ~60% dos casos). Drenagem venosa direta pelas veias cardíacas mínimas (de Tebésio) e seio coronário. Inervação autonômica pelo plexo cardíaco (vago e tronco simpático).
+                    </div>
+                </div>
+
+                <button class="btn-inspect-modal" id="btnOpenModal">
+                    <i class="fas fa-search-plus"></i> Ampliar Ficha Anatômica da Estrutura
+                </button>
+
+                <!-- Botões Anterior / Próxima estrutura -->
+                <div class="inspector-nav">
+                    <button class="nav-struct-btn" id="btnPrevStruct" title="Estrutura Anterior">
+                        <i class="fas fa-chevron-left"></i> Anterior
+                    </button>
+                    <button class="nav-struct-btn" id="btnNextStruct" title="Próxima Estrutura">
+                        Próxima <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+    </main>
+
+            <!-- Modelo anatômico 3D interativo do Sketchfab -->
+            <section class="sketchfab-section" aria-labelledby="sketchfabTitle">
+                <h2 id="sketchfabTitle"><i class="fas fa-cube"></i> Modelo 3D do Coração Humano</h2>
+                <div class="sketchfab-embed-wrapper">
+                    <div class="sketchfab-frame">
+                        <iframe
+                            title="Modelo 3D: anatomia externa do coração humano"
+                            src="https://sketchfab.com/models/a3f0ea2030214a6bbaa97e7357eebd58/embed?ui_infos=0&amp;ui_controls=1"
+                            allow="autoplay; fullscreen; xr-spatial-tracking"
+                            allowfullscreen
+                            loading="eager"
+                            referrerpolicy="strict-origin-when-cross-origin">
+                        </iframe>
+                    </div>
+                    <div class="sketchfab-fallback">
+                        Se o espaço acima continuar mostrando o símbolo de bloqueio, o navegador ou a rede pode estar impedindo o carregamento do visualizador externo. O modelo continua disponível na página oficial:
+                        <br>
+                        <a class="sketchfab-open-link"
+                           href="https://sketchfab.com/3d-models/cardiac-anatomy-external-view-of-human-heart-a3f0ea2030214a6bbaa97e7357eebd58"
+                           target="_blank" rel="noopener noreferrer">
+                            <i class="fas fa-external-link-alt"></i> Abrir modelo 3D no Sketchfab
+                        </a>
+                    </div>
+                    <p>
+                        <a href="https://sketchfab.com/3d-models/cardiac-anatomy-external-view-of-human-heart-a3f0ea2030214a6bbaa97e7357eebd58" target="_blank" rel="nofollow noopener noreferrer">Cardiac Anatomy: External view of human heart</a>
+                        por <a href="https://sketchfab.com/HannahNewey" target="_blank" rel="nofollow noopener noreferrer">HannahNewey</a> no
+                        <a href="https://sketchfab.com" target="_blank" rel="nofollow noopener noreferrer">Sketchfab</a>.
+                    </p>
+                </div>
+            </section>
+
+    <!-- ==========================================================================
+         MODAL DE INSPEÇÃO DETALHADA DA ESTRUTURA
+         ========================================================================== -->
+    <div class="modal-backdrop" id="inspectionModal">
+        <div class="modal-card" role="dialog" aria-modal="true">
+            <button class="modal-close" id="btnCloseModal" aria-label="Fechar">
+                <i class="fas fa-times"></i>
+            </button>
+            <span class="inspector-category" style="color: var(--color__tertiary);" id="modalCategory"></span>
+            <h2 style="font-size: 22px; font-weight: 800; color: var(--color__primary); margin-top: 4px;" id="modalName"></h2>
+            <div style="font-size: 13.5px; font-style: italic; color: var(--text-muted); margin-bottom: 16px;" id="modalLatin"></div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div class="data-block">
+                    <div class="data-label"><i class="fas fa-map-marker-alt"></i> Localização e Topografia</div>
+                    <div class="data-value" id="modalTopography"></div>
+                </div>
+                <div class="data-block">
+                    <div class="data-label"><i class="fas fa-tint"></i> Função Hemodinâmica / Fisiológica</div>
+                    <div class="data-value" id="modalFunction"></div>
+                </div>
+                <div class="data-block">
+                    <div class="data-label"><i class="fas fa-project-diagram"></i> Relações Anatômicas e Morfologia</div>
+                    <div class="data-value" id="modalRelations"></div>
+                </div>
+                <div class="data-block blue">
+                    <div class="data-label"><i class="fas fa-heartbeat"></i> Irrigação Arterial, Drenagem e Inervação</div>
+                    <div class="data-value" id="modalVascular"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         SCRIPT DE CONTROLE DO ATLAS INTERATIVO
+         ========================================================================== -->
+    <script>
+        // Banco de Dados Anatômico Exclusivo das 17 Estruturas do Coração
+        const heartStructures = {
+            "atrio-direito": {
+                shortName: "Átrio Direito",
+                category: "Câmara Cardíaca • Coração Direito",
+                name: "Átrio Direito",
+                latin: "Atrium dextrum",
+                layer: "camaras",
+                topography: "Forma a borda direita do coração no mediastino médio, situado anteriormente e à direita do átrio esquerdo, recebendo as veias cavas superior (superiormente) e inferior (inferiormente).",
+                function: "Recebe o retorno venoso sistêmico e do miocárdio (via seio coronário) em regime de baixa pressão (2–6 mmHg) e impulsiona o sangue através do óstio atrioventricular direito para o ventrículo direito.",
+                relations: "Separa-se do átrio esquerdo pelo septo interatrial (contendo a fossa oval e seu limbo). A crista terminal separa internamente o seio das veias cavas (liso) da parede anterior com músculos pectíneos. A aurícula direita sobrepõe-se à raiz da aorta.",
+                vascular: "Irrigado por ramos atriais da artéria coronária direita (incluindo a artéria do nó sinoatrial). Drenagem pelo seio coronário e veias cardíacas mínimas. Inervação autonômica via plexo cardíaco."
+            },
+            "atrio-esquerdo": {
+                shortName: "Átrio Esquerdo",
+                category: "Câmara Cardíaca • Coração Esquerdo",
+                name: "Átrio Esquerdo",
+                latin: "Atrium sinistrum",
+                layer: "camaras",
+                topography: "Constitui a maior parte da base (face posterior) do coração ao nível das vértebras T6–T9, posicionado diretamente anterior ao esôfago e à aorta torácica descendente.",
+                function: "Recebe sangue arterial oxigenado proveniente dos pulmões através das quatro veias pulmonares (pressão média de 6–12 mmHg) e ejeta-o através da valva mitral para o ventrículo esquerdo.",
+                relations: "Parede interna predominantemente lisa; músculos pectíneos restritos à aurícula esquerda (que contorna a borda esquerda do tronco pulmonar). Relaciona-se anteriormente com a raiz da aorta e posteriormente com o seio oblíquo do pericárdio e o esôfago.",
+                vascular: "Irrigado por ramos atriais da artéria circunflexa (ramo da coronária esquerda). Drenagem venosa para o seio coronário via veia oblíqua do átrio esquerdo (de Marshall)."
+            },
+            "ventriculo-direito": {
+                shortName: "Ventrículo Direito",
+                category: "Câmara Cardíaca • Coração Direito",
+                name: "Ventrículo Direito",
+                latin: "Ventriculus dexter",
+                layer: "camaras",
+                topography: "Ocupa a maior extensão da face esternocostal (anterior) e parte da face diafragmática do coração, logo posterior ao corpo do esterno e às cartilagens costais esquerdas (3ª a 6ª).",
+                function: "Bombeia sangue venoso através do cone arterial (infundíbulo) e da valva pulmonar para o tronco pulmonar rumo à circulação pulmonar (pressão sistólica/diastólica ~25/4 mmHg).",
+                relations: "Parede miocárdica fina (3–5 mm) em corte semilunar abraçando o septo interventricular. Apresenta trabéculas cárneas grosseiras, três músculos papilares (anterior, posterior e septal) e a trabécula septomarginal (banda moderadora).",
+                vascular: "Irrigado pela artéria coronária direita (ramo marginal direito) na maior parte de sua parede anterior e diafragmática, e por ramos da interventricular anterior próximo ao septo."
+            },
+            "ventriculo-esquerdo": {
+                shortName: "Ventrículo Esquerdo",
+                category: "Câmara Cardíaca • Coração Esquerdo",
+                name: "Ventrículo Esquerdo",
+                latin: "Ventriculus sinister",
+                layer: "camaras",
+                topography: "Forma o ápice do coração (5º espaço intercostal esquerdo na linha hemiclavicular), quase toda a face pulmonar esquerda e a maior parte da face diafragmática.",
+                function: "Gera elevada pressão sistólica (~120/8 mmHg) para ejetar sangue arterial através do vestíbulo aórtico e da valva aórtica para a aorta ascendente e toda a circulação sistêmica.",
+                relations: "Parede miocárdica espessa (10–15 mm, cerca de 3x mais espessa que o VD), cavidade cônica com trabéculas cárneas finas e dois grandes músculos papilares (anterior e posterior).",
+                vascular: "Irrigado pela artéria coronária esquerda através dos ramos interventricular anterior (DA) e circunflexa (CX), além do ramo interventricular posterior (DP) na parede diafragmática."
+            },
+            "septo-interventricular": {
+                shortName: "Septo Interventricular",
+                category: "Divisão Intracardíaca",
+                name: "Septo Interventricular",
+                latin: "Septum interventriculare",
+                layer: "camaras",
+                topography: "Parede divisória oblíqua posicionada entre os ventrículos direito e esquerdo, correspondendo externamente aos sulcos interventriculares anterior e posterior.",
+                function: "Isola mecanicamente as circulações pulmonar (baixa pressão) e sistêmica (alta pressão) e conduz os ramos direito e esquerdo do fascículo atrioventricular.",
+                relations: "Composto por uma extensa parte muscular inferior (espessa, abaulada para o interior do VD) e uma pequena parte membranácea superior fina, contígua ao esqueleto fibroso e à valva aórtica.",
+                vascular: "Os dois terços anteriores são irrigados pelos ramos perfurantes septais da artéria interventricular anterior (DA); o terço posterior é irrigado pela artéria interventricular posterior (DP)."
+            },
+            "valva-tricuspide": {
+                shortName: "Valva Tricúspide",
+                category: "Aparelho Valvar • Atrioventricular",
+                name: "Valva Tricúspide (AV Direita)",
+                latin: "Valva atrioventricularis dextra",
+                layer: "valvas",
+                topography: "Guarnece o óstio atrioventricular direito ao nível do 4º–5º espaços intercostais posteriores ao esterno.",
+                function: "Permite o fluxo diastólico unidirecional do átrio direito para o ventrículo direito e fecha-se na sístole ventricular para impedir o refluxo (regurgitação) atrial.",
+                relations: "Constituída por três cúspides (anterior, posterior e septal) fixadas ao anel fibroso direito e conectadas por cordas tendíneas aos músculos papilares anterior, posterior e septal do VD.",
+                vascular: "Cúspides avasculares em sua porção livre (nutridas por difusão sanguínea); o anel fibroso recebe pequenos ramos da artéria coronária direita."
+            },
+            "valva-mitral": {
+                shortName: "Valva Mitral",
+                category: "Aparelho Valvar • Atrioventricular",
+                name: "Valva Mitral / Bicúspide (AV Esquerda)",
+                latin: "Valva atrioventricularis sinistra",
+                layer: "valvas",
+                topography: "Localizada no óstio atrioventricular esquerdo ao nível da 4ª cartilagem costal esquerda, projetando-se acusticamente no ápice cardíaco.",
+                function: "Assegura o enchimento unidirecional do ventrículo esquerdo na diástole e suporta a alta pressão sistólica ventricular sem prolapsar para o átrio esquerdo.",
+                relations: "Possui duas cúspides: anterior (aórtica, em continuidade fibrosa com a valva aórtica) e posterior (mural). Ancorada por cordas tendíneas espessas aos músculos papilares anterior e posterior do VE.",
+                vascular: "Irrigação do aparelho subvalvar: o músculo papilar anterior recebe suprimento duplo (DA e CX), enquanto o posterior recebe suprimento único (geralmente DP)."
+            },
+            "valva-pulmonar": {
+                shortName: "Valva Pulmonar",
+                category: "Aparelho Valvar • Semilunar",
+                name: "Valva Pulmonar",
+                latin: "Valva trunci pulmonalis",
+                layer: "valvas",
+                topography: "Situada no ápice do cone arterial (infundíbulo) do ventrículo direito, na origem do tronco pulmonar, ao nível da 3ª cartilagem costal esquerda.",
+                function: "Abre-se durante a sístole ventricular direita para ejeção ao tronco pulmonar e fecha-se passivamente na diástole pelo recuo elástico arterial.",
+                relations: "Formada por três válvulas semilunares (anterior, direita e esquerda), cada qual apresentando um nódulo fibroso central (de Morgagni) e duas lúnulas delgadas.",
+                vascular: "Estruturas valvares avasculares nutridas por difusão direta; raiz pulmonar irrigada por ramos conais da artéria coronária direita e da interventricular anterior."
+            },
+            "valva-aortica": {
+                shortName: "Valva Aórtica",
+                category: "Aparelho Valvar • Semilunar",
+                name: "Valva Aórtica",
+                latin: "Valva aortae",
+                layer: "valvas",
+                topography: "Posicionada na saída do vestíbulo aórtico do ventrículo esquerdo, posterior e à direita da valva pulmonar, ao nível do 3º espaço intercostal esquerdo.",
+                function: "Controla a ejeção sistólica para a aorta ascendente e impede o refluxo diastólico aórtico (~80 mmHg) de volta ao ventrículo esquerdo.",
+                relations: "Composta por três válvulas semilunares (direita, esquerda e posterior) com nódulos (de Arâncio) e lúnulas. Acima das válvulas direita e esquerda situam-se os óstios das artérias coronárias nos seios da aorta (de Valsalva).",
+                vascular: "Válvulas avasculares; a raiz aórtica circundante é irrigada pelos ramos proximais das artérias coronárias direita e esquerda."
+            },
+            "aorta": {
+                shortName: "Artéria Aorta",
+                category: "Grande Vaso • Circulação Sistêmica",
+                name: "Aorta Ascendente e Arco da Aorta",
+                latin: "Aorta ascendens et Arcus aortae",
+                layer: "vasos",
+                topography: "Emerge da base do ventrículo esquerdo no mediastino médio (aorta ascendente) e curva-se posteriormente para a esquerda no mediastino superior ao nível do ângulo esternal (T4–T5).",
+                function: "Conduz todo o débito cardíaco oxigenado para a circulação coronariana (via seios da aorta) e sistêmica (via ramos do arco aórtico e aorta descendente).",
+                relations: "O arco da aorta emite três ramos principais: tronco braquiocefálico, artéria carótida comum esquerda e artéria subclávia esquerda. Une-se à artéria pulmonar esquerda pelo ligamento arterial.",
+                vascular: "Paredes elásticas espessas nutridas por vasa vasorum originados dos ramos coronarianos e intercostais; inervação barorreceptora pelo nervo vago (X)."
+            },
+            "tronco-pulmonar": {
+                shortName: "Tronco Pulmonar",
+                category: "Grande Vaso • Circulação Pulmonar",
+                name: "Tronco Pulmonar",
+                latin: "Truncus pulmonalis",
+                layer: "vasos",
+                topography: "Origina-se do cone arterial do ventrículo direito, ascende obliquamente anterior e à esquerda da aorta ascendente por cerca de 5 cm e bifurca-se sob o arco da aorta.",
+                function: "Transporta sangue venoso desoxigenado do ventrículo direito para as artérias pulmonares direita e esquerda rumo aos capilares alveolares.",
+                relations: "Envolto juntamente com a aorta ascendente pela lâmina visceral do pericárdio seroso (anteriormente ao seio transverso do pericárdio).",
+                vascular: "Nutrição parietal por vasa vasorum derivados de ramos bronquiais e coronarianos; inervação simpática e parassimpática pelo plexo cardíaco."
+            },
+            "veia-cava-superior": {
+                shortName: "Veia Cava Superior",
+                category: "Grande Vaso • Retorno Sistêmico",
+                name: "Veia Cava Superior (VCS)",
+                latin: "Vena cava superior",
+                layer: "vasos",
+                topography: "Formada pela união das veias braquiocefálicas direita e esquerda atrás da 1ª cartilagem costal direita; desce verticalmente à direita da aorta ascendente até o 3º espaço costal direito.",
+                function: "Drena o sangue venoso da cabeça, pescoço, membros superiores e parede torácica (via veia ázigos) diretamente para a porção superior do átrio direito.",
+                relations: "Recebe o arco da veia ázigos pouco antes de perfurar o pericárdio fibroso. Relaciona-se lateralmente com o nervo frênico direito e a pleura mediastinal.",
+                vascular: "Vaso avalvular de parede fina nutrido por vasa vasorum provenientes da artéria torácica interna e artérias pericardicofrênicas."
+            },
+            "veia-cava-inferior": {
+                shortName: "Veia Cava Inferior",
+                category: "Grande Vaso • Retorno Sistêmico",
+                name: "Veia Cava Inferior (VCI)",
+                latin: "Vena cava inferior",
+                layer: "vasos",
+                topography: "Atravessa o forame da veia cava no centro tendíneo do diafragma ao nível da vértebra T8 e penetra imediatamente na face inferior do átrio direito.",
+                function: "Retorna ao átrio direito todo o sangue venoso proveniente dos membros inferiores, pelve e cavidade abdominopélvica.",
+                relations: "Possui curto trajeto intratorácico (~2 cm) revestido pelo pericárdio. Em seu óstio atrial encontra-se uma prega semilunar rudimentar (válvula da veia cava inferior ou de Eustáquio).",
+                vascular: "Nutrida por pequenos ramos das artérias frênicas inferiores e pericardicofrênicas."
+            },
+            "veias-pulmonares": {
+                shortName: "Veias Pulmonares",
+                category: "Grandes Vasos • Retorno Pulmonar",
+                name: "Veias Pulmonares (Direitas e Esquerdas)",
+                latin: "Venae pulmonales dextrae et sinistrae",
+                layer: "vasos",
+                topography: "Quatro vasos (superior direita, inferior direita, superior esquerda e inferior esquerda) que emergem dos hilos pulmonares e desembocam na parede posterior do átrio esquerdo.",
+                function: "Transportam sangue arterial recém-oxigenado dos pulmões para o átrio esquerdo.",
+                relations: "Não possuem válvulas. As veias pulmonares direitas passam posteriormente à veia cava superior e ao átrio direito; as esquerdas passam anteriormente à aorta torácica descendente.",
+                vascular: "Apresentam extensões de miocárdio atrial esquerdo (bainhas miocárdicas) em seus 1–2 cm proximais junto aos óstios atriais."
+            },
+            "arteria-coronaria-direita": {
+                shortName: "Artéria Coronária Direita",
+                category: "Vascularização Coronariana",
+                name: "Artéria Coronária Direita (ACD)",
+                latin: "Arteria coronaria dextra",
+                layer: "coronarias",
+                topography: "Origina-se no seio aórtico direito da aorta ascendente e cursa no sulco coronário (atrioventricular) direito entre a aurícula direita e o tronco pulmonar.",
+                function: "Assegura a perfusão miocárdica durante a diástole ventricular para o coração direito e, na dominância direita (~85%), para a parede diafragmática e septo posterior.",
+                relations: "Emite o ramo do nó sinoatrial (~60%), o ramo marginal direito (ao longo da borda inferior) e, na cruz do coração, o ramo interventricular posterior (descendente posterior) e o ramo do nó AV (~80%).",
+                vascular: "A drenagem venosa correspondente ocorre principalmente pela veia cardíaca parva e veia cardíaca média (interventricular posterior) rumo ao seio coronário."
+            },
+            "arteria-coronaria-esquerda": {
+                shortName: "Artéria Coronária Esquerda",
+                category: "Vascularização Coronariana",
+                name: "Artéria Coronária Esquerda (ACE)",
+                latin: "Arteria coronaria sinistra",
+                layer: "coronarias",
+                topography: "Nasce no seio aórtico esquerdo da aorta ascendente, percorre curto trajeto (1–2 cm) posterior ao tronco pulmonar e bifurca-se no sulco coronário esquerdo.",
+                function: "Fornece a maior parcela do suprimento sanguíneo arterial para o ventrículo esquerdo, átrio esquerdo e dois terços anteriores do septo interventricular.",
+                relations: "Divide-se em Artéria Interventricular Anterior / Descendente Anterior (DA, que desce pelo sulco IV anterior emitindo ramos diagonais e septais) e Artéria Circunflexa (CX, que contorna a borda esquerda emitindo o ramo marginal esquerdo).",
+                vascular: "A drenagem venosa acompanha seus ramos através da veia cardíaca magna (interventricular anterior), que desemboca diretamente no seio coronário."
+            },
+            "no-sinoatrial": {
+                shortName: "Nó Sinoatrial",
+                category: "Sistema de Condução Elétrica",
+                name: "Nó Sinoatrial (Nó SA)",
+                latin: "Nodus sinuatrialis",
+                layer: "conducao",
+                topography: "Situado na parede anterolateral superior do átrio direito, na junção com a veia cava superior, profundamente ao epicárdio na extremidade superior da crista terminal.",
+                function: "Atua como marca-passo fisiológico do coração (frequência intrínseca de 60–100 bpm), gerando impulsos elétricos espontâneos que iniciam cada ciclo cardíaco.",
+                relations: "Propaga a despolarização atrial através das vias internodais (anterior, média e posterior) até o nó AV e pelo feixe interatrial (de Bachmann) para o átrio esquerdo.",
+                vascular: "Irrigado pela artéria do nó sinoatrial (ramo da artéria coronária direita em ~60% dos indivíduos e da artéria circunflexa em ~40%). Modulado pelos sistemas simpático e parassimpático."
+            },
+            "no-atrioventricular": {
+                shortName: "Nó Atrioventricular",
+                category: "Sistema de Condução Elétrica",
+                name: "Nó Atrioventricular (Nó AV)",
+                latin: "Nodus atrioventricularis",
+                layer: "conducao",
+                topography: "Localizado na região posteroinferior do septo interatrial, próximo à abertura do seio coronário, no vértice do Triângulo de Koch.",
+                function: "Recebe o impulso atrial e promove retardo fisiológico (~0,10 s) na condução, permitindo que os átrios concluam sua contração e esvaziem sangue nos ventrículos antes da sístole ventricular.",
+                relations: "Delimitado anatomicamente no Triângulo de Koch pelo tendão de Todaro, pela inserção da cúspide septal da valva tricúspide e pelo óstio do seio coronário.",
+                vascular: "Irrigado pelo ramo do nó atrioventricular, originado da artéria coronária direita em ~80% dos casos (dominância direita) ou da circunflexa em ~20%."
+            },
+            "feixe-de-his": {
+                shortName: "Feixe de His e Ramos",
+                category: "Sistema de Condução Elétrica",
+                name: "Fascículo Atrioventricular (Feixe de His)",
+                latin: "Fasciculus atrioventricularis",
+                layer: "conducao",
+                topography: "Origina-se no nó AV, perfura o trígono fibroso direito do esqueleto fibroso e cursa ao longo da margem inferior da parte membranácea do septo interventricular.",
+                function: "Constitui a única ponte elétrica fisiológica entre átrios e ventrículos, bifurcando-se nos ramos direito e esquerdo e terminando nos ramos subendocárdicos (fibras de Purkinje) para contração ventricular sincronizada.",
+                relations: "O ramo direito segue pelo lado direito do septo e atravessa a trabécula septomarginal até o músculo papilar anterior; o ramo esquerdo subdivide-se nos fascículos anterior e posterior no VE.",
+                vascular: "O tronco do feixe de His e os ramos proximais são irrigados principalmente pelos ramos perfurantes septais da artéria interventricular anterior (DA)."
+            }
+        };
+
+        // Variáveis de Estado
+        let selectedKey = "atrio-direito";
+        let zoomLevel = 1;
+        let panX = 0;
+        let panY = 0;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+
+        const svgEl = document.getElementById("heartAtlasSvg");
+        const svgContainer = document.getElementById("svgContainer");
+
+        // ==========================================================================
+        // SELEÇÃO DE ESTRUTURA E ATUALIZAÇÃO DO PAINEL DE INSPEÇÃO
+        // ==========================================================================
+        function selectStructure(key) {
+            const data = heartStructures[key];
+            if (!data) return;
+
+            selectedKey = key;
+
+            // Garante que a camada correspondente esteja visível
+            const layerBtn = document.querySelector(`.layer-toggle[data-layer="${data.layer}"]`);
+            if (layerBtn && !layerBtn.classList.contains("active")) {
+                layerBtn.click();
+            }
+
+            // Destaca no SVG
+            document.querySelectorAll(".anat-structure").forEach(el => {
+                el.classList.toggle("selected", el.dataset.part === key);
+            });
+
+            // Atualiza Dados Anatômicos no Painel Lateral
+            document.getElementById("inspCategory").textContent = data.category;
+            document.getElementById("inspName").textContent = data.name;
+            document.getElementById("inspLatin").textContent = data.latin;
+            document.getElementById("inspTopography").textContent = data.topography;
+            document.getElementById("inspFunction").textContent = data.function;
+            document.getElementById("inspRelations").textContent = data.relations;
+            document.getElementById("inspVascular").textContent = data.vascular;
+        }
+
+        // Cliques nas estruturas do SVG
+        document.querySelectorAll(".anat-structure").forEach(el => {
+            el.addEventListener("click", (e) => {
+                e.stopPropagation();
+                selectStructure(el.dataset.part);
+            });
+        });
+
+        // ==========================================================================
+        // NAVEGAÇÃO SEQUENCIAL (ANTERIOR / PRÓXIMA ESTRUTURA)
+        // ==========================================================================
+        const structureKeys = Object.keys(heartStructures);
+
+        document.getElementById("btnPrevStruct").addEventListener("click", () => {
+            const currentIndex = structureKeys.indexOf(selectedKey);
+            const prevIndex = (currentIndex - 1 + structureKeys.length) % structureKeys.length;
+            selectStructure(structureKeys[prevIndex]);
+        });
+
+        document.getElementById("btnNextStruct").addEventListener("click", () => {
+            const currentIndex = structureKeys.indexOf(selectedKey);
+            const nextIndex = (currentIndex + 1) % structureKeys.length;
+            selectStructure(structureKeys[nextIndex]);
+        });
+
+        // ==========================================================================
+        // ALTERNÂNCIA DE CAMADAS E VISTAS DO ATLAS
+        // ==========================================================================
+        document.querySelectorAll(".layer-toggle").forEach(btn => {
+            btn.addEventListener("click", () => {
+                btn.classList.toggle("active");
+                const layerName = btn.dataset.layer;
+                const layerGroup = document.getElementById(`layer-${layerName}`);
+                if (layerGroup) {
+                    layerGroup.classList.toggle("layer-hidden", !btn.classList.contains("active"));
+                }
+            });
+        });
+
+        // Seletor Rápido de Vistas
+        document.querySelectorAll(".view-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".view-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+
+                const view = btn.dataset.view;
+                const epicardiumOverlay = document.getElementById("anterior-epicardium-overlay");
+
+                if (view === "coronal") {
+                    epicardiumOverlay.classList.add("layer-hidden");
+                    setLayersState({ camaras: true, valvas: true, vasos: true, coronarias: true, conducao: true });
+                } else if (view === "anterior") {
+                    epicardiumOverlay.classList.remove("layer-hidden");
+                    setLayersState({ camaras: false, valvas: false, vasos: true, coronarias: true, conducao: false });
+                }
+            });
+        });
+
+        function setLayersState(stateMap) {
+            Object.keys(stateMap).forEach(layer => {
+                const btn = document.querySelector(`.layer-toggle[data-layer="${layer}"]`);
+                const group = document.getElementById(`layer-${layer}`);
+                if (btn && group) {
+                    btn.classList.toggle("active", stateMap[layer]);
+                    group.classList.toggle("layer-hidden", !stateMap[layer]);
+                }
+            });
+        }
+
+        // ==========================================================================
+        // ZOOM, PAN, RÓTULOS E TELA CHEIA
+        // ==========================================================================
+        function applyTransform() {
+            svgEl.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+        }
+
+        document.getElementById("btnZoomIn").addEventListener("click", () => {
+            zoomLevel = Math.min(zoomLevel + 0.25, 2.5);
+            applyTransform();
+        });
+
+        document.getElementById("btnZoomOut").addEventListener("click", () => {
+            zoomLevel = Math.max(zoomLevel - 0.25, 0.75);
+            if (zoomLevel === 1) { panX = 0; panY = 0; }
+            applyTransform();
+        });
+
+        document.getElementById("btnZoomReset").addEventListener("click", () => {
+            zoomLevel = 1;
+            panX = 0;
+            panY = 0;
+            applyTransform();
+        });
+
+        // Arrastar (Pan) no SVG
+        svgContainer.addEventListener("mousedown", (e) => {
+            if (e.target.closest(".anat-structure")) return;
+            isDragging = true;
+            dragStartX = e.clientX - panX;
+            dragStartY = e.clientY - panY;
+        });
+
+        window.addEventListener("mousemove", (e) => {
+            if (!isDragging) return;
+            panX = e.clientX - dragStartX;
+            panY = e.clientY - dragStartY;
+            applyTransform();
+        });
+
+        window.addEventListener("mouseup", () => {
+            isDragging = false;
+        });
+
+        // Zoom com roda do mouse
+        svgContainer.addEventListener("wheel", (e) => {
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? 0.15 : -0.15;
+            zoomLevel = Math.min(Math.max(zoomLevel + delta, 0.75), 2.5);
+            applyTransform();
+        }, { passive: false });
+
+        // Mostrar/Ocultar Rótulos
+        document.getElementById("btnToggleLabels").addEventListener("click", function () {
+            this.classList.toggle("active");
+            svgContainer.classList.toggle("labels-hidden", !this.classList.contains("active"));
+        });
+
+        // Modo Tela Cheia
+        document.getElementById("btnFullscreen").addEventListener("click", function () {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+                this.classList.add("active");
+            } else {
+                document.exitFullscreen().catch(() => {});
+                this.classList.remove("active");
+            }
+        });
+
+        // ==========================================================================
+        // MODAL DE INSPEÇÃO AMPLIADA
+        // ==========================================================================
+        const modal = document.getElementById("inspectionModal");
+        document.getElementById("btnOpenModal").addEventListener("click", () => {
+            const data = heartStructures[selectedKey];
+            document.getElementById("modalCategory").textContent = data.category;
+            document.getElementById("modalName").textContent = data.name;
+            document.getElementById("modalLatin").textContent = data.latin;
+            document.getElementById("modalTopography").textContent = data.topography;
+            document.getElementById("modalFunction").textContent = data.function;
+            document.getElementById("modalRelations").textContent = data.relations;
+            document.getElementById("modalVascular").textContent = data.vascular;
+            modal.classList.add("open");
+        });
+
+        document.getElementById("btnCloseModal").addEventListener("click", () => {
+            modal.classList.remove("open");
+        });
+
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) modal.classList.remove("open");
+        });
+
+        // Inicialização
+        window.addEventListener("DOMContentLoaded", () => {
+            selectStructure("atrio-direito");
+        });
+    </script>
+</body>
+</html>
